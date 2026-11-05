@@ -3,797 +3,670 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>CropPulse - Smart Crop Protection</title>
+<title>CropPulse - Smart Agriculture</title>
 
 <style>
-:root {
-  --green: #16794b;
-  --dark: #104b32;
-  --light: #eaf6ef;
-  --bg: #f4f8f5;
-  --yellow: #f3bd3e;
-  --red: #dc5757;
-  --text: #20352a;
-}
-
 * { box-sizing: border-box; }
 
 body {
   margin: 0;
-  background: var(--bg);
-  color: var(--text);
   font-family: Arial, sans-serif;
-}
-
-.app {
-  max-width: 460px;
-  min-height: 100vh;
-  margin: auto;
-  background: white;
-  padding-bottom: 85px;
+  background: #f1f7f2;
+  color: #20352a;
 }
 
 header {
-  background: var(--green);
+  background: #176b43;
   color: white;
-  padding: 22px 18px;
-  border-radius: 0 0 22px 22px;
+  padding: 20px;
+  border-radius: 0 0 20px 20px;
 }
 
-header h1 { margin: 0; font-size: 25px; }
-header p { margin: 7px 0 0; font-size: 13px; }
+header h1 { margin: 0; font-size: 26px; }
+header p { font-size: 13px; margin-bottom: 0; }
 
-main { padding: 16px; }
-
-h2 { font-size: 19px; margin: 8px 0 14px; }
-h3 { font-size: 16px; margin: 0 0 10px; }
+.container {
+  max-width: 650px;
+  margin: auto;
+  padding: 15px;
+}
 
 .card {
   background: white;
-  border: 1px solid #e4eee7;
-  border-radius: 15px;
-  padding: 15px;
-  margin-bottom: 14px;
-  box-shadow: 0 3px 12px #153b2410;
+  padding: 16px;
+  margin-bottom: 15px;
+  border-radius: 14px;
+  box-shadow: 0 3px 12px #00000010;
 }
 
-.weather {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 8px;
+h2 {
+  color: #176b43;
+  font-size: 18px;
+  margin-top: 0;
 }
 
-.metric {
-  background: var(--light);
-  padding: 12px 5px;
-  border-radius: 11px;
-  text-align: center;
-}
+h3 { font-size: 15px; }
 
-.metric strong {
+label {
   display: block;
-  font-size: 19px;
-  color: var(--dark);
+  font-weight: bold;
+  font-size: 13px;
+  margin: 12px 0 6px;
 }
 
-.metric small { font-size: 11px; }
-
-select, input, textarea {
+input, select {
   width: 100%;
   padding: 12px;
-  margin: 7px 0;
-  border: 1px solid #cbdccf;
-  border-radius: 9px;
-  background: white;
+  border: 1px solid #cbd9ce;
+  border-radius: 8px;
   font-size: 14px;
+  background: white;
 }
 
 button {
-  border: 0;
-  padding: 12px 15px;
-  border-radius: 9px;
-  background: var(--green);
+  background: #176b43;
   color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 12px;
   font-weight: bold;
   cursor: pointer;
+  margin-top: 12px;
 }
+
+button.full { width: 100%; }
 
 button.secondary {
-  background: var(--light);
-  color: var(--dark);
+  background: #e6f3e9;
+  color: #176b43;
 }
 
-button:active { opacity: .8; }
+.weather-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+}
 
-.full { width: 100%; }
+.weather-box {
+  padding: 15px 8px;
+  background: #edf6ef;
+  border-radius: 12px;
+  text-align: center;
+}
 
-.risk-score {
+.weather-icon {
+  font-size: 27px;
+  display: block;
+  margin-bottom: 7px;
+}
+
+.weather-value {
+  font-size: 21px;
+  font-weight: bold;
+  color: #176b43;
+}
+
+.weather-label {
+  font-size: 12px;
+  color: #627368;
+  margin-top: 5px;
+}
+
+.risk-card {
   text-align: center;
   padding: 20px;
-  background: var(--light);
-  border-radius: 13px;
+  border-radius: 12px;
+  margin-top: 12px;
 }
 
-.risk-score strong {
-  display: block;
+.risk-card.low {
+  background: #dff3e4;
+  color: #176b43;
+}
+
+.risk-card.medium {
+  background: #fff0c6;
+  color: #8a6100;
+}
+
+.risk-card.high {
+  background: #ffe0e0;
+  color: #a32121;
+}
+
+.risk-number {
   font-size: 38px;
+  font-weight: bold;
   margin: 8px;
 }
 
-.risk-label {
+.risk-tag {
   display: inline-block;
-  padding: 7px 14px;
+  padding: 7px 15px;
   border-radius: 20px;
-  font-weight: bold;
-  font-size: 12px;
-}
-
-.low { background: #d8f2df; color: #176a36; }
-.medium { background: #fff0c7; color: #8b5c00; }
-.high { background: #ffe0e0; color: #a52b2b; }
-
-.zone {
-  padding: 13px;
-  margin: 8px 0;
-  border-radius: 10px;
-  color: #26342b;
-}
-
-.zone.red { background: #ffe0e0; border-left: 5px solid var(--red); }
-.zone.yellow { background: #fff1c9; border-left: 5px solid var(--yellow); }
-.zone.green { background: #ddf3e3; border-left: 5px solid #39a765; }
-
-.nav {
-  position: fixed;
-  bottom: 0;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 100%;
-  max-width: 460px;
   background: white;
-  border-top: 1px solid #e2eae4;
-  display: flex;
-  justify-content: space-around;
-  padding: 10px 3px;
+  font-size: 12px;
+  font-weight: bold;
 }
 
-.nav button {
-  background: transparent;
-  color: #567062;
-  padding: 8px 5px;
+.status {
+  padding: 12px;
+  border-radius: 9px;
+  margin-top: 12px;
+  font-size: 13px;
+  display: none;
+}
+
+.status.red { display: block; background: #ffe0e0; color: #a32121; }
+.status.green { display: block; background: #e0f3e5; color: #176b43; }
+
+.field-map {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 6px;
+  margin-top: 15px;
+}
+
+.field {
+  min-height: 65px;
+  border-radius: 8px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: bold;
+  padding: 4px 1px;
+  border: 2px solid transparent;
+}
+
+.field span { font-size: 19px; }
+
+.field small {
+  font-size: 9px;
+  margin-top: 3px;
+}
+
+.field.red { background: #ffe0e0; border-color: #e14c4c; color: #922323; }
+.field.yellow { background: #fff0c6; border-color: #e4b735; color: #775500; }
+.field.green { background: #def2e3; border-color: #54a96d; color: #176b43; }
+.field.source { background: #e9ddff; border-color: #895bc9; color: #512e8b; }
+
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 14px;
   font-size: 11px;
 }
 
-.nav button.active { color: var(--green); }
+.legend span { display: flex; align-items: center; gap: 5px; }
 
-.panel { display: none; }
-.panel.active { display: block; }
+.dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+  display: inline-block;
+}
+
+.red-dot { background: #e14c4c; }
+.yellow-dot { background: #e4b735; }
+.green-dot { background: #54a96d; }
+.purple-dot { background: #895bc9; }
+
+.info {
+  background: #edf6ef;
+  padding: 12px;
+  border-radius: 9px;
+  font-size: 13px;
+  line-height: 1.6;
+}
 
 .small {
-  font-size: 12px;
-  color: #65766c;
+  color: #6a7a70;
+  font-size: 11px;
   line-height: 1.5;
 }
 
-.task {
-  display: flex;
-  align-items: center;
-  gap: 9px;
-  padding: 10px 0;
-  border-bottom: 1px solid #edf1ee;
-}
-
-.task input { width: auto; }
-
-#photoPreview {
-  max-width: 100%;
-  max-height: 220px;
-  display: none;
-  margin-top: 12px;
-  border-radius: 12px;
-}
-
-.toast {
-  position: fixed;
-  bottom: 80px;
-  left: 50%;
-  transform: translateX(-50%);
-  background: #20352a;
-  color: white;
-  padding: 12px 18px;
-  border-radius: 10px;
-  display: none;
-  max-width: 90%;
-  font-size: 13px;
-}
-
-footer {
-  text-align: center;
-  padding: 15px;
-  font-size: 11px;
-  color: #718077;
-}
+hr { border: 0; border-top: 1px solid #e8eee9; margin: 15px 0; }
 </style>
 </head>
 
 <body>
-<div class="app">
 
 <header>
   <h1>🌱 CropPulse</h1>
-  <p>Smart crop monitoring and early-warning demo</p>
-  <p>📍 Coimbatore, Tamil Nadu</p>
+  <p>AI-Powered Plant Disease Prediction & Wind-Based Early Warning</p>
+  <p id="headerLocation">📍 Location not selected</p>
 </header>
 
-<main>
+<div class="container">
 
-<!-- HOME -->
-<section id="home" class="panel active">
+  <!-- LOCATION -->
+  <div class="card">
+    <h2>📍 Field Location</h2>
 
-<h2>Today's Farm Overview</h2>
+    <label>Enter your village / field location</label>
+    <input id="location" placeholder="Example: Coimbatore, Tamil Nadu">
 
-<div class="card">
-  <h3>🌤️ Weather Conditions</h3>
-  <div class="weather">
-    <div class="metric">
-      <strong>29°C</strong>
-      <small>Temperature</small>
+    <button class="full" onclick="saveLocation()">Update Location</button>
+    <button class="full secondary" onclick="getLocation()">📡 Use Current GPS Location</button>
+
+    <p class="small" id="locationMessage">
+      Enter a location manually or allow GPS access.
+    </p>
+  </div>
+
+  <!-- WEATHER -->
+  <div class="card">
+    <h2>🌤️ Field Weather Conditions</h2>
+
+    <div class="weather-grid">
+      <div class="weather-box">
+        <span class="weather-icon">🌡️</span>
+        <div class="weather-value" id="tempDisplay">29°C</div>
+        <div class="weather-label">Temperature</div>
+      </div>
+
+      <div class="weather-box">
+        <span class="weather-icon">💧</span>
+        <div class="weather-value" id="humidityDisplay">84%</div>
+        <div class="weather-label">Humidity</div>
+      </div>
+
+      <div class="weather-box">
+        <span class="weather-icon">🌧️</span>
+        <div class="weather-value" id="rainDisplay">18 mm</div>
+        <div class="weather-label">Rainfall</div>
+      </div>
+
+      <div class="weather-box">
+        <span class="weather-icon">💨</span>
+        <div class="weather-value" id="windDisplay">12 km/h</div>
+        <div class="weather-label">Wind speed</div>
+      </div>
     </div>
-    <div class="metric">
-      <strong>84%</strong>
-      <small>Humidity</small>
+
+    <p class="small">
+      Demo weather values. Live weather requires a weather API.
+    </p>
+
+    <hr>
+
+    <h3>Enter Field Weather Values</h3>
+
+    <label>Temperature (°C)</label>
+    <input type="number" id="temp" value="29">
+
+    <label>Humidity (%)</label>
+    <input type="number" id="humidity" value="84">
+
+    <label>Rainfall (mm)</label>
+    <input type="number" id="rain" value="18">
+
+    <label>Wind speed (km/h)</label>
+    <input type="number" id="windSpeed" value="12">
+
+    <button class="full" onclick="updateWeather()">Update Weather</button>
+  </div>
+
+  <!-- DISEASE RISK -->
+  <div class="card">
+    <h2>🦠 Disease Risk Prediction</h2>
+
+    <label>Source field</label>
+    <select id="source">
+      <option value="12">Field 13</option>
+      <option value="0">Field 1</option>
+      <option value="1">Field 2</option>
+      <option value="2">Field 3</option>
+      <option value="3">Field 4</option>
+      <option value="4">Field 5</option>
+      <option value="5">Field 6</option>
+      <option value="6">Field 7</option>
+      <option value="7">Field 8</option>
+      <option value="8">Field 9</option>
+      <option value="9">Field 10</option>
+      <option value="10">Field 11</option>
+      <option value="11">Field 12</option>
+      <option value="13">Field 14</option>
+      <option value="14">Field 15</option>
+      <option value="15">Field 16</option>
+      <option value="16">Field 17</option>
+      <option value="17">Field 18</option>
+      <option value="18">Field 19</option>
+      <option value="19">Field 20</option>
+      <option value="20">Field 21</option>
+      <option value="21">Field 22</option>
+      <option value="22">Field 23</option>
+      <option value="23">Field 24</option>
+      <option value="24">Field 25</option>
+    </select>
+
+    <label>Crop type</label>
+    <select id="crop">
+      <option>Rice</option>
+      <option>Sugarcane</option>
+      <option>Other</option>
+    </select>
+
+    <label>Disease prediction score (%)</label>
+    <input type="number" id="risk" value="91" min="0" max="100">
+
+    <button class="full" onclick="checkRisk()">Check Disease Risk</button>
+
+    <div id="riskResult" class="risk-card high">
+      <div>Illustrative Disease Risk</div>
+      <div class="risk-number" id="riskNumber">91%</div>
+      <span class="risk-tag" id="riskLevel">HIGH RISK</span>
     </div>
-    <div class="metric">
-      <strong>18 mm</strong>
-      <small>Rainfall</small>
+
+    <div id="triggerMessage" class="status red">
+      ⚠️ High-risk threshold crossed. Wind transmission assessment is triggered.
     </div>
   </div>
-  <p class="small">Sample values only. Not connected to a live weather service.</p>
-</div>
 
-<div class="card">
-  <h3>🌾 Select Your Crop</h3>
-  <select id="homeCrop" onchange="updateHome()">
-    <option value="rice">Rice</option>
-    <option value="sugarcane">Sugarcane</option>
-  </select>
-  <div id="homeRisk"></div>
-</div>
+  <!-- WIND TRANSMISSION -->
+  <div class="card">
+    <h2>💨 Wind-Based Disease Transmission</h2>
 
-<div class="card">
-  <h3>⚠️ Today's Advisory</h3>
-  <p id="homeAdvice">High humidity may favour certain crop diseases. Monitor your field.</p>
-  <button class="full" onclick="openPanel('risk')">Check Disease Risk</button>
-</div>
+    <div class="info">
+      When a source field has a prediction score above 85%, CropPulse
+      assesses the surrounding fields using wind direction and field position.
+    </div>
 
-<div class="card">
-  <h3>📸 Check a Leaf</h3>
-  <p class="small">Upload a crop leaf image for record keeping and future analysis.</p>
-  <input type="file" accept="image/*" onchange="previewPhoto(event)">
-  <img id="photoPreview" alt="Selected crop leaf">
-  <p id="photoMessage" class="small"></p>
-</div>
+    <label>Wind is blowing towards</label>
+    <select id="direction">
+      <option value="N">North ↑</option>
+      <option value="NE">North-East ↗</option>
+      <option value="E">East →</option>
+      <option value="SE">South-East ↘</option>
+      <option value="S">South ↓</option>
+      <option value="SW">South-West ↙</option>
+      <option value="W">West ←</option>
+      <option value="NW">North-West ↖</option>
+    </select>
 
-</section>
+    <button class="full" onclick="generateMap()">Generate Wind Risk Map</button>
 
-<!-- RISK CHECK -->
-<section id="risk" class="panel">
+    <div id="windMessage" class="status"></div>
 
-<h2>🌡️ Disease Risk Checker</h2>
+    <h3 style="margin-top:20px;">Surrounding Field Map</h3>
+    <p class="small" id="mapTitle">Waiting for risk assessment...</p>
 
-<div class="card">
-  <label>Crop</label>
-  <select id="riskCrop">
-    <option value="rice">Rice</option>
-    <option value="sugarcane">Sugarcane</option>
-  </select>
+    <div class="field-map" id="fieldMap"></div>
 
-  <label>Temperature (°C)</label>
-  <input type="number" id="temperature" value="29">
+    <div class="legend">
+      <span><i class="dot purple-dot"></i> Source</span>
+      <span><i class="dot red-dot"></i> Red</span>
+      <span><i class="dot yellow-dot"></i> Yellow</span>
+      <span><i class="dot green-dot"></i> Green</span>
+    </div>
 
-  <label>Humidity (%)</label>
-  <input type="number" id="humidity" value="84" min="0" max="100">
-
-  <label>Recent Rainfall (mm)</label>
-  <input type="number" id="rainfall" value="18" min="0">
-
-  <label>Crop Growth Stage</label>
-  <select id="growth">
-    <option>Seedling</option>
-    <option>Vegetative</option>
-    <option>Flowering</option>
-    <option>Harvesting</option>
-  </select>
-
-  <button class="full" onclick="calculateRisk()">Calculate Risk</button>
-</div>
-
-<div class="card">
-  <h3>Risk Assessment</h3>
-  <div id="riskResult" class="risk-score">
-    Enter your field conditions and calculate risk.
+    <div id="fieldReport" class="info" style="margin-top:15px;">
+      Generate the wind risk map to see the field report.
+    </div>
   </div>
+
+  <!-- RECOMMENDATIONS -->
+  <div class="card">
+    <h2>🌿 Recommended Actions</h2>
+    <div class="info">
+      • Inspect leaves and stems for visible disease symptoms.<br><br>
+      • Monitor humidity and field moisture.<br><br>
+      • Check potentially exposed downwind fields.<br><br>
+      • Confirm the disease with an agricultural expert before treatment.<br><br>
+      • Follow locally approved crop protection advice.
+    </div>
+  </div>
+
   <p class="small">
-    This is an illustrative rule-based score, not a validated disease prediction.
-    Actual risk depends on crop variety, pathogen presence, field conditions and other factors.
+    CropPulse student prototype. Weather values and risk scores are
+    illustrative. RED indicates predicted downwind exposure, not confirmed
+    infection. GREEN means comparatively lower predicted exposure, not
+    guaranteed safety. Real transmission assessment needs verified source
+    outbreaks, GPS field coordinates, disease-specific dispersal data,
+    wind measurements and field validation.
   </p>
-</div>
-
-</section>
-
-<!-- WIND ZONES -->
-<section id="zones" class="panel">
-
-<h2>💨 Wind-Based Risk Zones</h2>
-
-<div class="card">
-  <h3>Reported Disease Location</h3>
-  <input id="fieldName" placeholder="Enter affected field or village">
-  <label>Wind direction</label>
-  <select id="windDirection">
-    <option>North</option>
-    <option>South</option>
-    <option>East</option>
-    <option>West</option>
-    <option>North-East</option>
-    <option>North-West</option>
-    <option>South-East</option>
-    <option>South-West</option>
-  </select>
-
-  <label>Wind speed (km/h)</label>
-  <input type="number" id="windSpeed" value="10">
-
-  <button class="full" onclick="showZones()">Generate Risk Zones</button>
-</div>
-
-<div class="card">
-  <h3>Illustrative Risk-Zone Output</h3>
-  <div id="zoneResult">
-    <p class="small">Enter wind conditions to view the illustrative zones.</p>
-  </div>
-</div>
-
-<p class="small">
-  Wind direction alone cannot establish infection risk. Real risk zoning requires
-  pathogen-specific dispersal data, source verification, distance, weather and
-  field observations. These zones are conceptual, not a geographic forecast.
-</p>
-
-</section>
-
-<!-- HISTORY -->
-<section id="history" class="panel">
-
-<h2>📊 Disease History</h2>
-
-<div class="card">
-  <h3>Sample Disease Records</h3>
-  <p class="small">Illustrative records for demonstrating the app. Not verified outbreak data.</p>
-  <div class="task">
-    <span>🌾</span>
-    <div>
-      <strong>Rice blast</strong>
-      <p class="small">Example record · Rice · High humidity conditions</p>
-    </div>
-  </div>
-  <div class="task">
-    <span>🌱</span>
-    <div>
-      <strong>Sugarcane red rot</strong>
-      <p class="small">Example record · Sugarcane · Field monitoring advised</p>
-    </div>
-  </div>
-  <div class="task">
-    <span>🍃</span>
-    <div>
-      <strong>Leaf disease watch</strong>
-      <p class="small">Example record · Field observation required</p>
-    </div>
-  </div>
-</div>
-
-<div class="card">
-  <h3>Why Historical Data Matters</h3>
-  <p class="small">
-    CropPulse can eventually combine past disease occurrence, season,
-    crop growth stage and weather conditions to identify periods that
-    deserve closer field monitoring.
-  </p>
-</div>
-
-</section>
-
-<!-- SENSORS -->
-<section id="sensors" class="panel">
-
-<h2>📡 Field Microclimate</h2>
-
-<div class="card">
-  <h3>Manual Sensor Readings</h3>
-  <p class="small">Enter readings from a field sensor. No hardware is connected in this demo.</p>
-
-  <label>Field Temperature (°C)</label>
-  <input type="number" id="sensorTemp" value="30">
-
-  <label>Field Humidity (%)</label>
-  <input type="number" id="sensorHumidity" value="82">
-
-  <label>Soil Moisture (%)</label>
-  <input type="number" id="soilMoisture" value="65">
-
-  <button class="full" onclick="saveSensor()">Save Readings</button>
-  <div id="sensorOutput" class="small"></div>
-</div>
-
-<div class="card">
-  <h3>Why Field Sensors?</h3>
-  <p class="small">
-    A distant weather station may not represent the temperature and humidity
-    inside a particular farm. Local sensors can provide more relevant
-    microclimate measurements.
-  </p>
-</div>
-
-</section>
-
-<!-- CARE -->
-<section id="care" class="panel">
-
-<h2>🌿 Crop Care Guide</h2>
-
-<div class="card">
-  <label>Select Crop</label>
-  <select id="careCrop" onchange="renderCare()">
-    <option value="rice">Rice</option>
-    <option value="sugarcane">Sugarcane</option>
-  </select>
-
-  <div id="careAdvice"></div>
-</div>
-
-<div class="card">
-  <h3>Spray Safety Checklist</h3>
-  <div class="task"><input type="checkbox"> <span>Identify the disease before spraying.</span></div>
-  <div class="task"><input type="checkbox"> <span>Use only locally approved products.</span></div>
-  <div class="task"><input type="checkbox"> <span>Follow the product label and dose.</span></div>
-  <div class="task"><input type="checkbox"> <span>Wear suitable protective equipment.</span></div>
-  <div class="task"><input type="checkbox"> <span>Follow the pre-harvest interval.</span></div>
-</div>
-
-</section>
-
-<!-- ALERTS -->
-<section id="alerts" class="panel">
-
-<h2>🔔 Farm Reminders</h2>
-
-<div class="card">
-  <h3>Add a Reminder</h3>
-  <input id="taskInput" placeholder="Example: Inspect rice leaves">
-  <input type="date" id="taskDate">
-  <button class="full" onclick="addTask()">Add Reminder</button>
-</div>
-
-<div class="card">
-  <h3>Your Tasks</h3>
-  <div id="taskList">
-    <div class="task">
-      <input type="checkbox">
-      <span>Inspect crop leaves</span>
-    </div>
-    <div class="task">
-      <input type="checkbox">
-      <span>Check field humidity</span>
-    </div>
-  </div>
-</div>
-
-<p class="small">Reminders are stored only during this browser session in this demo.</p>
-
-</section>
-
-<!-- FIELD PROFILE -->
-<section id="profile" class="panel">
-
-<h2>👨‍🌾 Field Profile</h2>
-
-<div class="card">
-  <label>Farmer / Field Name</label>
-  <input id="profileName" placeholder="Enter your name">
-
-  <label>Village / Location</label>
-  <input id="profileLocation" placeholder="Enter village">
-
-  <label>Crop</label>
-  <select id="profileCrop">
-    <option>Rice</option>
-    <option>Sugarcane</option>
-  </select>
-
-  <label>Farm Area (acres)</label>
-  <input id="profileArea" type="number" placeholder="Example: 2">
-
-  <button class="full" onclick="saveProfile()">Save Field Profile</button>
-</div>
-
-</section>
-
-<footer>
-  CropPulse · Student Innovation Prototype<br>
-  Demo version — not an agricultural diagnosis system
-</footer>
-
-</main>
-
-<nav class="nav">
-  <button class="active" onclick="openPanel('home',this)">🏠<br>Home</button>
-  <button onclick="openPanel('risk',this)">📊<br>Risk</button>
-  <button onclick="openPanel('zones',this)">💨<br>Zones</button>
-  <button onclick="openPanel('care',this)">🌿<br>Care</button>
-  <button onclick="openPanel('alerts',this)">🔔<br>Alerts</button>
-  <button onclick="openPanel('profile',this)">👤<br>Profile</button>
-</nav>
-
-<div id="toast" class="toast"></div>
 
 </div>
 
 <script>
-let tasks = [];
+const gridSize = 5;
+const totalFields = 25;
 
-function openPanel(id, button) {
-  document.querySelectorAll(".panel").forEach(p => p.classList.remove("active"));
-  document.getElementById(id).classList.add("active");
+const windVectors = {
+  N:  [0, -1],
+  NE: [1, -1],
+  E:  [1, 0],
+  SE: [1, 1],
+  S:  [0, 1],
+  SW: [-1, 1],
+  W:  [-1, 0],
+  NW: [-1, -1]
+};
 
-  document.querySelectorAll(".nav button").forEach(b => b.classList.remove("active"));
-  if (button) button.classList.add("active");
+function saveLocation() {
+  const value = document.getElementById("location").value.trim();
 
-  if (id === "care") renderCare();
-}
-
-function showToast(message) {
-  const toast = document.getElementById("toast");
-  toast.textContent = message;
-  toast.style.display = "block";
-  setTimeout(() => toast.style.display = "none", 2500);
-}
-
-function updateHome() {
-  const crop = document.getElementById("homeCrop").value;
-  const result = document.getElementById("homeRisk");
-  const advice = document.getElementById("homeAdvice");
-
-  if (crop === "rice") {
-    result.innerHTML = `
-      <h3>Rice Blast Monitoring</h3>
-      <p>Sample risk indicator: <strong>62%</strong></p>
-      <span class="risk-label medium">Moderate watch</span>`;
-    advice.textContent = "Inspect rice leaves for lesions and monitor humidity.";
-  } else {
-    result.innerHTML = `
-      <h3>Sugarcane Disease Monitoring</h3>
-      <p>Sample risk indicator: <strong>48%</strong></p>
-      <span class="risk-label medium">Moderate watch</span>`;
-    advice.textContent = "Inspect sugarcane stalks and leaves for unusual symptoms.";
+  if (!value) {
+    alert("Please enter a location.");
+    return;
   }
+
+  document.getElementById("headerLocation").textContent = "📍 " + value;
+  document.getElementById("locationMessage").textContent =
+    "Location updated successfully: " + value;
 }
 
-function calculateRisk() {
-  const crop = document.getElementById("riskCrop").value;
-  const temp = Number(document.getElementById("temperature").value);
+function getLocation() {
+  const message = document.getElementById("locationMessage");
+
+  if (!navigator.geolocation) {
+    message.textContent = "GPS is not supported by this browser.";
+    return;
+  }
+
+  message.textContent = "Requesting GPS permission...";
+
+  navigator.geolocation.getCurrentPosition(
+    function(position) {
+      const lat = position.coords.latitude;
+      const lon = position.coords.longitude;
+
+      document.getElementById("location").value =
+        lat.toFixed(5) + ", " + lon.toFixed(5);
+
+      document.getElementById("headerLocation").textContent =
+        "📍 GPS: " + lat.toFixed(4) + ", " + lon.toFixed(4);
+
+      message.textContent =
+        "GPS coordinates captured. A map/geocoding service is needed to show the village name.";
+    },
+    function() {
+      message.textContent =
+        "Could not access GPS. Allow location permission or enter your location manually.";
+    }
+  );
+}
+
+function updateWeather() {
+  const temp = Number(document.getElementById("temp").value);
   const humidity = Number(document.getElementById("humidity").value);
-  const rain = Number(document.getElementById("rainfall").value);
+  const rain = Number(document.getElementById("rain").value);
+  const wind = Number(document.getElementById("windSpeed").value);
 
   if (
-    !Number.isFinite(temp) || !Number.isFinite(humidity) ||
-    !Number.isFinite(rain) || humidity < 0 || humidity > 100 ||
-    rain < 0
-  ) {
-    showToast("Please enter valid weather values.");
-    return;
-  }
-
-  let score = 10;
-
-  if (humidity >= 80) score += 30;
-  else if (humidity >= 65) score += 18;
-
-  if (temp >= 25 && temp <= 32) score += 20;
-  else if (temp >= 20 && temp <= 35) score += 10;
-
-  if (rain >= 15) score += 25;
-  else if (rain >= 5) score += 15;
-
-  score = Math.min(score, 95);
-
-  let level = "Low";
-  let className = "low";
-
-  if (score >= 65) {
-    level = "High";
-    className = "high";
-  } else if (score >= 40) {
-    level = "Moderate";
-    className = "medium";
-  }
-
-  const disease = crop === "rice" ? "Rice blast" : "Sugarcane disease";
-
-  document.getElementById("riskResult").innerHTML = `
-    <p>${disease} — illustrative risk indicator</p>
-    <strong>${score}%</strong>
-    <span class="risk-label ${className}">${level} watch</span>
-    <p class="small">Check field symptoms and consult local agricultural guidance.</p>
-  `;
-}
-
-function showZones() {
-  const field = document.getElementById("fieldName").value || "Reported field";
-  const direction = document.getElementById("windDirection").value;
-  const speed = Number(document.getElementById("windSpeed").value);
-
-  if (!Number.isFinite(speed) || speed < 0) {
-    showToast("Enter a valid wind speed.");
-    return;
-  }
-
-  document.getElementById("zoneResult").innerHTML = `
-    <p><strong>Reference:</strong> ${escapeHTML(field)}</p>
-    <p><strong>Wind direction:</strong> ${direction}</p>
-    <p><strong>Wind speed:</strong> ${speed} km/h</p>
-
-    <div class="zone red">
-      <strong>🔴 RED ZONE</strong><br>
-      Conceptual downwind monitoring priority.
-    </div>
-
-    <div class="zone yellow">
-      <strong>🟡 YELLOW ZONE</strong><br>
-      Nearby fields requiring observation.
-    </div>
-
-    <div class="zone green">
-      <strong>🟢 GREEN ZONE</strong><br>
-      Lower-priority monitoring area in this concept.
-    </div>
-  `;
-}
-
-function previewPhoto(event) {
-  const file = event.target.files[0];
-  if (!file) return;
-
-  if (!file.type.startsWith("image/")) {
-    showToast("Please select an image file.");
-    return;
-  }
-
-  const reader = new FileReader();
-
-  reader.onload = function(e) {
-    const img = document.getElementById("photoPreview");
-    img.src = e.target.result;
-    img.style.display = "block";
-
-    document.getElementById("photoMessage").textContent =
-      "Image preview loaded. No disease detection model is connected.";
-  };
-
-  reader.readAsDataURL(file);
-}
-
-function renderCare() {
-  const crop = document.getElementById("careCrop").value;
-  const area = document.getElementById("careAdvice");
-
-  if (crop === "rice") {
-    area.innerHTML = `
-      <h3>Rice Crop Care</h3>
-      <ul>
-        <li>Inspect leaves regularly for unusual spots.</li>
-        <li>Monitor field water conditions.</li>
-        <li>Check crop growth stage.</li>
-        <li>Seek confirmation before disease treatment.</li>
-      </ul>
-    `;
-  } else {
-    area.innerHTML = `
-      <h3>Sugarcane Crop Care</h3>
-      <ul>
-        <li>Inspect stalks and leaves regularly.</li>
-        <li>Monitor moisture and drainage.</li>
-        <li>Use healthy planting material.</li>
-        <li>Seek confirmation before disease treatment.</li>
-      </ul>
-    `;
-  }
-}
-
-function addTask() {
-  const input = document.getElementById("taskInput");
-  const date = document.getElementById("taskDate");
-
-  if (!input.value.trim()) {
-    showToast("Enter a reminder first.");
-    return;
-  }
-
-  tasks.push({ name: input.value.trim(), date: date.value });
-  updateTasks();
-  input.value = "";
-  date.value = "";
-  showToast("Reminder added.");
-}
-
-function updateTasks() {
-  const list = document.getElementById("taskList");
-  list.innerHTML = "";
-
-  tasks.forEach((task, index) => {
-    const div = document.createElement("div");
-    div.className = "task";
-
-    const checkbox = document.createElement("input");
-    checkbox.type = "checkbox";
-
-    const label = document.createElement("span");
-    label.textContent = task.name + (task.date ? " — " + task.date : "");
-
-    div.append(checkbox, label);
-    list.appendChild(div);
-  });
-}
-
-function saveSensor() {
-  const temp = Number(document.getElementById("sensorTemp").value);
-  const humidity = Number(document.getElementById("sensorHumidity").value);
-  const moisture = Number(document.getElementById("soilMoisture").value);
-
-  if (
-    !Number.isFinite(temp) || !Number.isFinite(humidity) ||
-    !Number.isFinite(moisture) ||
+    !Number.isFinite(temp) ||
+    !Number.isFinite(humidity) ||
+    !Number.isFinite(rain) ||
+    !Number.isFinite(wind) ||
     humidity < 0 || humidity > 100 ||
-    moisture < 0 || moisture > 100
+    rain < 0 || wind < 0
   ) {
-    showToast("Please enter valid sensor readings.");
+    alert("Please enter valid weather values.");
     return;
   }
 
-  document.getElementById("sensorOutput").innerHTML = `
-    <p>Latest manual readings:</p>
-    Temperature: ${temp}°C<br>
-    Humidity: ${humidity}%<br>
-    Soil moisture: ${moisture}%
-  `;
+  document.getElementById("tempDisplay").textContent = temp + "°C";
+  document.getElementById("humidityDisplay").textContent = humidity + "%";
+  document.getElementById("rainDisplay").textContent = rain + " mm";
+  document.getElementById("windDisplay").textContent = wind + " km/h";
 
-  showToast("Sample readings displayed.");
+  alert("Weather values updated.");
 }
 
-function saveProfile() {
-  const name = document.getElementById("profileName").value;
-  const location = document.getElementById("profileLocation").value;
+function checkRisk() {
+  const score = Number(document.getElementById("risk").value);
 
-  if (!name || !location) {
-    showToast("Enter your name and location.");
+  if (!Number.isFinite(score) || score < 0 || score > 100) {
+    alert("Enter a prediction score between 0 and 100.");
     return;
   }
 
-  showToast("Profile saved for this demo session.");
+  const result = document.getElementById("riskResult");
+  const number = document.getElementById("riskNumber");
+  const level = document.getElementById("riskLevel");
+  const trigger = document.getElementById("triggerMessage");
+
+  number.textContent = score + "%";
+
+  if (score > 85) {
+    result.className = "risk-card high";
+    level.textContent = "HIGH RISK";
+    trigger.className = "status red";
+    trigger.textContent =
+      "⚠️ Above 85%! Wind-based transmission assessment is triggered.";
+  } else if (score >= 50) {
+    result.className = "risk-card medium";
+    level.textContent = "MODERATE RISK";
+    trigger.className = "status green";
+    trigger.textContent =
+      "Continue monitoring. Wind transmission trigger is not activated.";
+  } else {
+    result.className = "risk-card low";
+    level.textContent = "LOW RISK";
+    trigger.className = "status green";
+    trigger.textContent =
+      "Lower predicted risk. Continue routine field monitoring.";
+  }
+
+  document.getElementById("fieldMap").innerHTML = "";
+  document.getElementById("fieldReport").textContent =
+    "Generate a new wind map after the high-risk trigger is activated.";
 }
 
-function escapeHTML(value) {
-  return String(value).replace(/[&<>"']/g, char => ({
-    "&": "&amp;",
-    "<": "&lt;",
-    ">": "&gt;",
-    '"': "&quot;",
-    "'": "&#39;"
-  })[char]);
+function generateMap() {
+  const risk = Number(document.getElementById("risk").value);
+  const speed = Number(document.getElementById("windSpeed").value);
+  const source = Number(document.getElementById("source").value);
+  const direction = document.getElementById("direction").value;
+
+  const message = document.getElementById("windMessage");
+  const map = document.getElementById("fieldMap");
+
+  if (!Number.isFinite(risk) || !Number.isFinite(speed) || speed < 0) {
+    alert("Enter valid risk and wind values.");
+    return;
+  }
+
+  if (risk <= 85) {
+    message.className = "status green";
+    message.textContent =
+      "Wind transmission assessment is not activated. Source-field prediction must be above 85%.";
+    map.innerHTML = "";
+    document.getElementById("fieldReport").textContent =
+      "No wind transmission assessment triggered.";
+    return;
+  }
+
+  if (speed <= 0) {
+    message.className = "status green";
+    message.textContent = "Enter a wind speed above zero.";
+    return;
+  }
+
+  message.className = "status red";
+  message.textContent =
+    "High-risk trigger activated! Assessing potentially exposed fields.";
+
+  const [dx, dy] = windVectors[direction];
+  const sx = source % gridSize;
+  const sy = Math.floor(source / gridSize);
+
+  const reach = speed >= 20 ? 4 : speed >= 10 ? 3 : 2;
+
+  let red = [];
+  let yellow = [];
+  let green = [];
+
+  map.innerHTML = "";
+
+  for (let i = 0; i < totalFields; i++) {
+    const x = i % gridSize;
+    const y = Math.floor(i / gridSize);
+
+    const rx = x - sx;
+    const ry = y - sy;
+
+    const distance = Math.sqrt(rx * rx + ry * ry);
+    const along = rx * dx + ry * dy;
+    const across = Math.abs(rx * dy - ry * dx);
+
+    let zone;
+
+    if (i === source) {
+      zone = "source";
+    } else if (along > 0 && along <= reach && across <= 1.3) {
+      zone = "red";
+      red.push(i + 1);
+    } else if (distance <= 2.2) {
+      zone = "yellow";
+      yellow.push(i + 1);
+    } else {
+      zone = "green";
+      green.push(i + 1);
+    }
+
+    const field = document.createElement("div");
+    field.className = "field " + zone;
+
+    if (zone === "source") {
+      field.innerHTML = "<span>⚠️</span>FIELD " +
+        (i + 1) + "<small>SOURCE</small>";
+    } else if (zone === "red") {
+      field.innerHTML = "<span>🔴</span>FIELD " +
+        (i + 1) + "<small>DOWNWIND</small>";
+    } else if (zone === "yellow") {
+      field.innerHTML = "<span>🟡</span>FIELD " +
+        (i + 1) + "<small>NEARBY</small>";
+    } else {
+      field.innerHTML = "<span>🟢</span>FIELD " +
+        (i + 1) + "<small>LOWER RISK</small>";
+    }
+
+    map.appendChild(field);
+  }
+
+  document.getElementById("mapTitle").textContent =
+    "Wind towards " + direction + " | Source: Field " + (source + 1);
+
+  document.getElementById("fieldReport").innerHTML =
+    "<strong>Source field:</strong> Field " + (source + 1) +
+    "<br><strong>Prediction:</strong> " + risk + "%" +
+    "<br><strong>Wind direction:</strong> " + direction +
+    "<br><strong>Wind speed:</strong> " + speed + " km/h" +
+    "<hr><strong>🔴 RED ZONE:</strong> " +
+    (red.length ? "Fields " + red.join(", ") : "No fields identified") +
+    "<br><strong>🟡 YELLOW ZONE:</strong> " +
+    (yellow.length ? "Fields " + yellow.join(", ") : "No fields identified") +
+    "<br><strong>🟢 GREEN ZONE:</strong> " +
+    (green.length ? "Fields " + green.join(", ") : "No fields identified");
 }
 
-updateHome();
-renderCare();
+// Initial demo display
+updateWeather();
+checkRisk();
 </script>
 
 </body>
