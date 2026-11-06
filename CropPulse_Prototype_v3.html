@@ -1,0 +1,355 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#176b43"><title>CropPulse – Crop Disease Early Warning</title>
+<style>
+:root{--g:#176b43;--ink:#203329;--muted:#718078}*{box-sizing:border-box}
+body{margin:0;background:#f3f7f3;color:var(--ink);font:15px Arial,sans-serif;padding-bottom:82px}
+header{background:var(--g);color:white;padding:16px 18px;position:sticky;top:0;z-index:3}header b{font-size:22px}
+.page{display:none;padding:16px;max-width:720px;margin:auto}.page.active{display:block}
+h2{font-size:21px;margin:5px 0 14px}h3{font-size:16px;margin:4px 0 11px}
+.card{background:white;padding:15px;border-radius:15px;margin:12px 0;box-shadow:0 2px 10px #0001}
+.muted{font-size:13px;color:var(--muted);line-height:1.5}.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.metric{background:#eef7f0;padding:12px;border-radius:12px}.metric strong{display:block;font-size:22px;margin:7px 0}
+label{display:block;font-weight:bold;font-size:13px;margin:11px 0 6px}
+input,select{width:100%;padding:11px;border:1px solid #d5dfd8;border-radius:9px;background:white;font-size:15px}
+button{border:0;border-radius:9px;padding:12px;background:var(--g);color:white;font-weight:bold;cursor:pointer}
+.full{width:100%;margin-top:11px}.secondary{background:#e6f2e9;color:var(--g)}
+.risk{padding:13px;border-radius:10px;text-align:center;font-weight:bold}.low{background:#d9f3df;color:#176b43}.moderate{background:#fff0bd;color:#8b6500}.high{background:#ffe0dc;color:#bd342b}
+nav{position:fixed;bottom:0;left:0;right:0;background:white;display:flex;justify-content:space-around;padding:8px 2px calc(8px + env(safe-area-inset-bottom));box-shadow:0 -3px 14px #0002;z-index:4}
+nav button{background:none;color:#68766e;flex:1;padding:5px 0;font-size:10px}nav button span{display:block;font-size:20px;margin-bottom:4px}nav button.active{color:var(--g)}
+table{border-collapse:collapse;width:100%;font-size:13px}td,th{padding:8px 5px;border-bottom:1px solid #e7eee8;text-align:left;vertical-align:top}th{color:#53645a}
+.fieldmap{display:grid;grid-template-columns:repeat(5,1fr);gap:5px}.field{aspect-ratio:1;border-radius:7px;display:flex;align-items:center;justify-content:center;flex-direction:column;color:white;font-size:11px;font-weight:bold}
+.tag{display:inline-block;background:#eaf4ec;color:#176b43;padding:5px 8px;border-radius:20px;font-size:11px;margin:2px}
+.cmp{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:10px 6px;border-bottom:1px solid #e7eee8;cursor:pointer;font-size:14px}.cmp.sel{background:#f1f8f3;border-radius:8px}.badge{padding:4px 9px;border-radius:12px;font-size:12px;font-weight:bold;white-space:nowrap}.note{background:#fff8dc;border-radius:10px;padding:10px;font-size:12px;color:#6f5a00;line-height:1.5;margin-top:10px}
+</style></head>
+<body>
+<header><b>🌱 CropPulse</b><div style="font-size:12px;opacity:.9;margin-top:3px">Location-aware crop disease early warning</div></header>
+
+<section id="home" class="page active">
+<h2>Farm overview 👋</h2>
+<div class="card"><div class="muted">Selected location</div><h3 id="homeLocation">Thanjavur, Tamil Nadu</h3><span class="tag" id="homeCropTag">Rice</span><span class="tag" id="homeDiseaseTag">Rice blast</span><p class="muted">Sample district weather values are included for demonstration, or you can load live weather for your place on the Location page. Leaf wetness and soil condition are estimates or manual entries.</p></div>
+<div class="grid">
+<div class="metric">🌡️<strong id="homeTemp">26°C</strong><span class="muted">Temperature</span></div>
+<div class="metric">💧<strong id="homeHumidity">92%</strong><span class="muted">Relative humidity</span></div>
+<div class="metric">🌧️<strong id="homeRain">8 mm</strong><span class="muted">Recent rainfall</span></div>
+<div class="metric">🍃<strong id="homeWet">11 h</strong><span class="muted">Leaf wetness</span></div>
+</div>
+<div class="card"><h3>Estimated disease risk</h3><div id="homeRisk" class="risk high">HIGH · 88%</div><p id="homeRiskText" class="muted">Demo risk estimate based on selected disease-weather rules.</p><button class="full" onclick="go('risk')">View disease assessment →</button></div>
+<div class="card"><h3>Quick actions</h3><div class="grid"><button class="secondary" onclick="go('location')">Change place / crop</button><button class="secondary" onclick="go('risk')">Change disease</button></div></div>
+</section>
+
+<section id="location" class="page">
+<h2>📍 Location & Farm Details</h2>
+<div class="card"><h3>Choose district and place</h3>
+<label>District</label><select id="district" onchange="loadDistrict()"></select>
+<label>Place in district (town / village)</label><select id="place" onchange="loadPlace()"></select>
+<p id="placeInfo" class="muted"></p>
+<div class="grid"><div><label>Latitude</label><input id="lat" type="number" step=".0001" inputmode="decimal"></div><div><label>Longitude</label><input id="lon" type="number" step=".0001" inputmode="decimal"></div></div>
+<p class="muted">Coordinates are approximate town or village centres. Edit them to match your own farm for better live weather.</p>
+<label>Crop</label><select id="crop" onchange="setCrop(this.value)"></select>
+<label>Farm / village name (optional)</label><input id="farmName" placeholder="Enter village or farm name">
+<button class="full" onclick="applyLocation()">Use this location</button>
+<button class="full secondary" onclick="fetchWeather()">☁️ Load live weather for these coordinates</button><p id="wxStatus" class="muted">Live weather needs internet. It fills temperature, humidity, rain, wind and minimum temperature. Leaf wetness is estimated from hours with humidity of 90% or more in the last 24 hours.</p>
+<button class="full secondary" onclick="getGPS()">📍 Use my current GPS coordinates</button><p id="gpsStatus" class="muted">GPS requires permission and a secure browser context. Coordinates do not automatically identify the village.</p></div>
+<div class="card"><h3>Places included in this demo</h3><div id="coverage" class="muted"></div><p class="muted">District crop notes are indicative only. A place being listed does not mean a disease is present there.</p></div>
+</section>
+
+<section id="weather" class="page">
+<h2>🌦️ Weather & Field Parameters</h2>
+<div class="card"><h3>Enter observed / station values</h3>
+<div class="grid"><div><label>🌡️ Temperature (°C)</label><input id="temp" type="number" value="26" step=".1"></div><div><label>💧 Relative humidity (%)</label><input id="humidity" type="number" value="92"></div><div><label>🌧️ Recent rainfall (mm)</label><input id="rain" type="number" value="8" step=".1"></div><div><label>🍃 Leaf wetness (hours)</label><input id="wetness" type="number" value="11" step=".1"></div><div><label>🌬️ Wind speed (km/h)</label><input id="wind" type="number" value="4" step=".1"></div><div><label>🌱 Soil condition</label><select id="soil"><option value="normal">Normal / drained</option><option value="wet">Wet soil</option><option value="waterlogged">Waterlogged</option></select></div></div>
+<label>Minimum temperature (°C)</label><input id="mintemp" type="number" value="21" step=".1">
+<button class="full" onclick="updateWeather()">Save field parameters & recalculate risk</button><p class="muted">For a real deployment, connect field sensors. Leaf wetness and minimum temperature matter, not just daily average temperature.</p></div>
+<div class="card"><h3>Parameters used in the prototype</h3><p class="muted">The app compares temperature, humidity, rainfall, leaf wetness, minimum temperature, wind and soil moisture against disease-favouring conditions, plus a bonus when the crop is at a sensitive growth stage. Variety susceptibility and infected planting material should also be included in a validated model.</p></div>
+</section>
+
+<section id="risk" class="page">
+<h2>🧪 Disease Risk Assessment</h2>
+<div class="card"><label>Crop</label><select id="riskCrop" onchange="setCrop(this.value)"></select>
+<label>Disease or pest</label><select id="disease" onchange="calculateRisk()"></select>
+<label>Crop growth stage</label><select id="stage" onchange="calculateRisk()"></select>
+<button class="full" onclick="calculateRisk()">Calculate demo risk</button></div>
+<div class="card"><h3>Result</h3><div id="riskResult" class="risk high">HIGH · 88%</div><p id="riskSummary" class="muted">Conditions currently match several disease-favouring parameters in the sample profile.</p><h3 style="margin-top:16px">Parameter check</h3><div id="parameterChecks"></div></div>
+<div class="card"><h3>All diseases for this crop</h3><p class="muted">Tap a row to open that disease.</p><div id="compare"></div></div>
+<div class="card"><h3>What the disease needs</h3><div id="diseaseGuide" class="muted"></div></div>
+<div class="card"><h3>Important field checks</h3><p id="fieldChecks" class="muted"></p><div class="note">Thresholds for the rice blast and sugarcane red rot checks follow the sources cited in the earlier version. Thresholds for the other crops and diseases are general screening ranges based on commonly reported favourable conditions. They are not validated for your area, so have TNAU or your agriculture officer review them before relying on them.</div></div>
+</section>
+
+<section id="windmap" class="page">
+<h2>💨 Surrounding Field Alert</h2><div class="card"><p class="muted">The wind-zone demonstration is enabled only for wind-dispersed diseases when the selected source-field risk exceeds 85%. It is a conceptual grid, not a geographic map.</p>
+<label>Wind direction</label><select id="direction"><option value="E">East →</option><option value="W">West ←</option><option value="N">North ↑</option><option value="S">South ↓</option><option value="NE">North-East ↗</option><option value="NW">North-West ↖</option><option value="SE">South-East ↘</option><option value="SW">South-West ↙</option></select>
+<label>Source field number (1–25)</label><input id="source" type="number" min="1" max="25" value="13"><button class="full" onclick="makeMap()">Generate exposure zones</button></div>
+<div class="card"><div id="mapMessage" class="risk yellow">Run a risk assessment first</div><div id="fieldMap" class="fieldmap" style="margin-top:12px"></div><p class="muted">🔴 RED: potential downwind exposure · 🟡 YELLOW: monitor closely · 🟢 GREEN: lower modelled exposure · 🔵 source field. Red does not mean confirmed infection.</p></div>
+</section>
+
+<section id="alerts" class="page">
+<h2>🔔 Alerts & Advice</h2><div class="card"><h3>Current alert</h3><p id="alertText" class="muted">No assessment yet.</p></div>
+<div class="card"><h3>Suggested actions</h3><div id="advice" class="muted">Select a crop and calculate disease risk to see relevant monitoring advice.</div></div>
+<div class="card"><h3>📅 Farm reminder</h3><input id="reminder" placeholder="e.g. Inspect field for symptoms"><button class="full" onclick="addReminder()">Add reminder</button><ul id="reminders" class="muted"></ul></div>
+</section>
+
+<nav><button class="active" onclick="go('home',this)"><span>🏠</span>Home</button><button onclick="go('location',this)"><span>📍</span>Location</button><button onclick="go('weather',this)"><span>🌦️</span>Weather</button><button onclick="go('risk',this)"><span>🧪</span>Risk</button><button onclick="go('windmap',this)"><span>🗺️</span>Map</button><button onclick="go('alerts',this)"><span>🔔</span>Alerts</button></nav>
+
+<script>
+const $=id=>document.getElementById(id);
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+/* ---------- Districts and places (coordinates are approximate town / village centres) ---------- */
+const DISTRICTS={
+coimbatore:{name:'Coimbatore',crop:'Maize',info:'Western Tamil Nadu district. Indicative crops include coconut, banana, maize and vegetables. Verify locally.',sample:{t:28,rh:78,rain:4,wet:6,wind:8,min:22,soil:'normal'},places:[
+['Coimbatore (city)',11.0168,76.9558],['Saravanampatti',11.0783,76.9961],['Sulur',11.0243,77.1279],['Mettupalayam',11.2990,76.9378],['Annur',11.2358,77.1080],['Kinathukadavu',10.8218,77.0129],['Pollachi',10.6609,77.0048]]},
+thanjavur:{name:'Thanjavur',crop:'Rice',info:'Cauvery delta district with extensive paddy cultivation. Example profile only.',sample:{t:26,rh:92,rain:8,wet:11,wind:4,min:21,soil:'normal'},places:[
+['Thanjavur (town)',10.7870,79.1378],['Kumbakonam',10.9617,79.3881],['Papanasam',10.9253,79.2711],['Thiruvaiyaru',10.8833,79.1000],['Orathanadu',10.6288,79.2005],['Pattukkottai',10.4250,79.3167],['Peravurani',10.2933,79.1917]]},
+madurai:{name:'Madurai',crop:'Rice',info:'Mixed cropping district; rice is grown in seasonal systems. Example profile only.',sample:{t:25,rh:90,rain:6,wet:10,wind:4,min:21,soil:'normal'},places:[
+['Madurai (city)',9.9252,78.1198],['Melur',10.0333,78.3376],['Vadipatti',10.0833,77.9500],['Usilampatti',9.9667,77.7833],['Thirumangalam',9.8244,77.9878]]},
+erode:{name:'Erode',crop:'Sugarcane',info:'Western Tamil Nadu district. Indicative crops include sugarcane, turmeric and banana. Example profile only.',sample:{t:30,rh:82,rain:35,wet:7,wind:6,min:25,soil:'wet'},places:[
+['Erode (city)',11.3410,77.7172],['Bhavani',11.4455,77.6819],['Perundurai',11.2756,77.5859],['Gobichettipalayam',11.4531,77.4400],['Sathyamangalam',11.5053,77.2380],['Anthiyur',11.5759,77.5906],['Kodumudi',11.0760,77.8870]]},
+thiruvarur:{name:'Tiruvarur',crop:'Rice',info:'Cauvery delta rice-growing district. Example profile only.',sample:{t:27,rh:91,rain:7,wet:10,wind:3,min:22,soil:'wet'},places:[['Tiruvarur (town)',10.7661,79.6344]]},
+nagapattinam:{name:'Nagapattinam',crop:'Rice',info:'Coastal Cauvery delta rice-growing district. Example profile only.',sample:{t:28,rh:88,rain:6,wet:8,wind:8,min:23,soil:'normal'},places:[['Nagapattinam (town)',10.7672,79.8449]]},
+kallakurichi:{name:'Kallakurichi',crop:'Sugarcane',info:'Recognised sugarcane-growing district. Example profile only.',sample:{t:30,rh:84,rain:42,wet:8,wind:5,min:25,soil:'wet'},places:[['Kallakurichi (town)',11.7380,78.9590]]},
+cuddalore:{name:'Cuddalore',crop:'Sugarcane',info:'Sugarcane-growing district in northern coastal Tamil Nadu. Example profile only.',sample:{t:29,rh:86,rain:48,wet:9,wind:7,min:24,soil:'wet'},places:[['Cuddalore (town)',11.7480,79.7714]]},
+villupuram:{name:'Villupuram',crop:'Sugarcane',info:'Sugarcane-growing district. Example profile only.',sample:{t:29,rh:80,rain:22,wet:5,wind:6,min:24,soil:'normal'},places:[['Villupuram (town)',11.9401,79.4861]]}
+};
+
+/* ---------- Crops, stages and disease rules ---------- */
+const STAGES={
+Rice:['Seedling / nursery','Vegetative / tillering','Booting / flowering','Grain filling / maturity'],
+Sugarcane:['Germination / early shoot','Tillering','Grand growth','Maturity'],
+Banana:['Planting / early growth','Vegetative','Shooting / bunch development','Harvest period'],
+Tomato:['Seedling / nursery','Vegetative','Flowering / fruiting','Harvest period'],
+Maize:['Seedling / early whorl','Vegetative','Tasseling / silking','Grain filling'],
+Turmeric:['Planting / sprouting','Vegetative','Rhizome development','Maturity']
+};
+const CROP_ICON={Rice:'🌾',Sugarcane:'🎋',Banana:'🍌',Tomato:'🍅',Maize:'🌽',Turmeric:'🟡'};
+const chk=(n,w,f,d)=>({n,w,f,d});
+const T=(lo,hi,w,why)=>chk(`Temperature ${lo}–${hi}°C`,w,p=>p.t>=lo&&p.t<=hi,p=>`Entered ${p.t}°C. ${why}`);
+const TH=(min,w,why)=>chk(`Temperature ≥${min}°C`,w,p=>p.t>=min,p=>`Entered ${p.t}°C. ${why}`);
+const RH=(min,w,why)=>chk(`Relative humidity ≥${min}%`,w,p=>p.rh>=min,p=>`Entered ${p.rh}%. ${why}`);
+const RHL=(max,w,why)=>chk(`Relative humidity ≤${max}%`,w,p=>p.rh<=max,p=>`Entered ${p.rh}%. ${why}`);
+const WET=(h,w,why)=>chk(`Leaf wetness ≥${h} hours`,w,p=>p.wet>=h,p=>`Entered ${p.wet} hours. ${why}`);
+const RAIN=(mm,w,why)=>chk(`Rainfall ≥${mm} mm`,w,p=>p.rr>=mm,p=>`Entered ${p.rr} mm. ${why}`);
+const DRY=(mm,w,why)=>chk(`Rainfall <${mm} mm`,w,p=>p.rr<mm,p=>`Entered ${p.rr} mm. ${why}`);
+const WIND=(k,w,why)=>chk(`Wind ≥${k} km/h`,w,p=>p.wind>=k,p=>`Entered ${p.wind} km/h. ${why}`);
+const SOILW=(w,why)=>chk('Wet soil / waterlogging',w,p=>p.so!=='normal',p=>`Soil setting: ${p.so}. ${why}`);
+const BASE=(w,why)=>chk('Host / field-history baseline',w,()=>true,()=>why);
+
+const DIS={
+'Rice blast':{crop:'Rice',wind:true,stages:[0,1,2],spread:'airborne spores',
+ checks:[
+  chk('Temperature 20–30°C',20,p=>p.t>=20&&p.t<=30,p=>`Entered ${p.t}°C; a favourable range reported by TNAU.`),
+  chk('Relative humidity ≥90%',25,p=>p.rh>=90,p=>`Entered ${p.rh}%; high humidity and wet leaves favour blast.`),
+  chk('Leaf wetness ≥10 hours',25,p=>p.wet>=10,p=>`Entered ${p.wet} hours; prolonged leaf wetness supports infection.`),
+  chk('Rainfall ≥5.9 mm',15,p=>p.rr>=5.9,p=>`Entered ${p.rr} mm; one TNAU-linked study found drizzle/rainfall with minimum temperature below 22.6°C associated with high incidence in its experimental conditions.`),
+  chk('Minimum temperature <22.6°C',15,p=>p.mn<22.6,p=>`Entered ${p.mn}°C; study-specific signal, not a universal threshold.`)],
+ guide:'Rice blast is caused by Magnaporthe oryzae (also reported as Pyricularia oryzae). Important inputs include minimum temperature, dew point, high relative humidity, leaf wetness and drizzling rainfall. TNAU describes 25–28°C, RH around 90% or higher, wet leaves, cloudy skies and frequent drizzle as favourable conditions.',
+ field:'Check leaf lesions, neck symptoms, crop stage (especially nursery/vegetative and heading), excess nitrogen, susceptible variety and recent field history. Wind direction alone cannot confirm spore infection.',
+ advice:['Scout leaves and necks for blast symptoms, especially after humid nights and drizzle.','Avoid excessive nitrogen; maintain appropriate spacing and field drainage.','Use locally recommended resistant varieties and seek TNAU / agriculture officer advice before treatment.']},
+'Rice sheath blight':{crop:'Rice',wind:false,stages:[1,2],spread:'sclerotia floating in field water and plant-to-plant contact',
+ checks:[T(28,32,25,'Warm weather is commonly associated with sheath blight.'),RH(90,25,'Very humid canopies favour the fungus.'),WET(10,20,'Long wet periods inside the canopy support spread.'),RAIN(5,10,'Rain keeps the canopy humid.'),SOILW(20,'Standing water helps the fungus spread between plants.')],
+ guide:'Sheath blight is caused by Rhizoctonia solani. Warm weather (about 28–32°C), high humidity, dense canopies, standing water and high nitrogen are commonly associated with more disease.',
+ field:'Check lower leaf sheaths near the water line for oval, greenish-grey lesions. Note plant density, nitrogen use and water depth.',
+ advice:['Avoid excess nitrogen and very dense planting where local guidance advises.','Follow recommended water management and remove weeds on bunds.','Confirm symptoms with your agriculture officer before any treatment.']},
+'Rice bacterial leaf blight':{crop:'Rice',wind:false,stages:[1,2],spread:'rain splash, wind-driven rain and irrigation water',
+ checks:[T(25,34,20,'Warm conditions are commonly associated with outbreaks.'),RH(70,15,'Humid weather helps the bacteria spread.'),RAIN(10,25,'Rain splash moves the bacteria between leaves.'),WIND(15,20,'Strong wind can wound leaves and carry rain droplets.'),SOILW(20,'Flooding and excess nitrogen are commonly linked with outbreaks.')],
+ guide:'Bacterial leaf blight is caused by Xanthomonas oryzae pv. oryzae. Warm temperatures, high humidity, rain, strong wind that wounds leaves, flooding and excess nitrogen are commonly associated with outbreaks.',
+ field:'Look for water-soaked streaks that turn yellow from leaf tips, especially after storms or flooding. Note whether irrigation water flows in from an affected field.',
+ advice:['Avoid draining water from an affected field into healthy fields.','Avoid excess nitrogen; follow local fertilizer recommendations.','Use locally recommended resistant varieties and confirm diagnosis with local experts.']},
+'Rice brown spot':{crop:'Rice',wind:false,stages:[0,2,3],spread:'infected seed, crop residue and short-distance spores',
+ checks:[T(25,30,25,'Warm weather is commonly associated with brown spot.'),RH(86,25,'High humidity supports infection.'),WET(10,25,'Long leaf wetness supports infection.'),RAIN(2,15,'Drizzle or rain keeps leaves wet.'),BASE(10,'Nutrient-poor or water-stressed fields are more susceptible; soil fertility and water stress are not entered.')],
+ guide:'Brown spot is caused by Bipolaris oryzae. Warm, humid weather with long leaf wetness is favourable, and nutrient-poor or water-stressed fields are more susceptible.',
+ field:'Check leaves and grains for oval brown spots with grey centres. Review soil fertility, seed source and water stress.',
+ advice:['Use healthy, clean seed from a reliable source.','Keep the crop well nourished and avoid water stress.','Ask your agriculture officer about locally suitable management.']},
+'Sugarcane red rot':{crop:'Sugarcane',wind:false,stages:[2,3],spread:'infected seed setts, rain splash and irrigation water',
+ checks:[
+  chk('Temperature 25–32°C',20,p=>p.t>=25&&p.t<=32,p=>`Entered ${p.t}°C; warm conditions support pathogen development in published studies.`),
+  chk('Relative humidity ≥80%',20,p=>p.rh>=80,p=>`Entered ${p.rh}%; humidity is one of the associated weather variables.`),
+  chk('Rainfall / rainy period',20,p=>p.rr>=30,p=>`Entered ${p.rr} mm; rainfall and rainy days have been associated with disease incidence.`),
+  chk('Wet soil / waterlogging',20,p=>p.so==='waterlogged'||p.so==='wet',p=>`Soil setting: ${p.so}; prolonged wetness or partial submergence can increase field concern.`),
+  chk('Extended canopy wetness',10,p=>p.wet>=8,p=>`Entered ${p.wet} hours; wet conditions can support infection and spread.`),
+  BASE(10,'This demo adds a small baseline because susceptible varieties and infected setts are major risk factors; actual variety and seed-health data are not entered.')],
+ guide:'Sugarcane red rot is caused by Colletotrichum falcatum. Warm conditions around 25–31°C, higher humidity, rainfall/rainy days and prolonged wet or waterlogged conditions have been associated with disease development. Weather alone is not enough: infected setts, crop variety and field history are critical.',
+ field:'Inspect stalks for internal reddening with characteristic white patches across the cane, drying tops and affected clumps. Record variety, seed-sett source, previous red-rot history, drainage and ratoon status. Do not use suspicious canes as planting material.',
+ advice:['Use healthy, disease-free seed setts and locally recommended resistant varieties.','Improve drainage and avoid prolonged water stagnation.','Inspect stalks and split suspect canes; remove and manage infected clumps as advised by local extension staff.']},
+'Sugarcane rust':{crop:'Sugarcane',wind:true,stages:[1,2],spread:'wind-borne spores',
+ checks:[T(20,30,25,'Moderate temperatures are commonly associated with rust.'),RH(80,30,'High humidity supports spore germination.'),WET(8,20,'Long leaf wetness supports infection.'),RAIN(2,10,'Drizzle keeps leaves wet.'),BASE(15,'Varieties differ greatly in susceptibility; the variety is not entered.')],
+ guide:'Sugarcane rust is caused by Puccinia species. Humid conditions with long leaf wetness and moderate temperatures are commonly associated with spread, and varieties differ greatly in susceptibility.',
+ field:'Look for small orange-brown pustules on the underside of leaves. Note the variety and the share of leaves affected.',
+ advice:['Scout leaves of several clumps, especially after humid weather.','Grow locally recommended, less susceptible varieties.','Confirm with your agriculture officer before any treatment.']},
+'Sugarcane early shoot borer':{crop:'Sugarcane',wind:false,stages:[0,1],spread:'moth flight over short distances',
+ checks:[TH(30,35,'Hot weather is commonly associated with higher pest pressure.'),RHL(65,30,'Dry air is commonly associated with infestations.'),DRY(5,25,'Dry spells are commonly associated with infestations.'),BASE(10,'Planting time and previous infestation are not entered.')],
+ guide:'Early shoot borer is an insect pest, not a disease. Hot, dry weather during germination and tillering is commonly associated with higher pest pressure.',
+ field:'Check young shoots for dead hearts (the central shoot dries). Record how many shoots are affected and the planting date.',
+ advice:['Scout young shoots weekly for dead hearts.','Follow local recommendations on planting time, trash mulching and irrigation.','Ask your agriculture officer about suitable management before any treatment.']},
+'Banana Sigatoka leaf spot':{crop:'Banana',wind:true,stages:[1,2],spread:'wind-borne spores and rain splash',
+ checks:[T(25,30,20,'Warm weather is commonly associated with Sigatoka.'),RH(80,25,'High humidity supports spore production.'),RAIN(5,20,'Rain splash moves spores.'),WET(10,25,'Long leaf wetness supports infection.'),BASE(10,'Variety and the amount of old infected leaves are not entered.')],
+ guide:'Sigatoka leaf spot is caused by Pseudocercospora fungi. Warm, humid weather with frequent rain and long leaf wetness favours spore production and spread, and older infected leaves act as a source.',
+ field:'Look for yellow streaks becoming brown spots on leaves. Count healthy leaves per plant and check for old infected leaves.',
+ advice:['Improve spacing, weed control and drainage to reduce humidity in the plantation.','Remove severely affected leaves as locally advised.','Confirm diagnosis with your agriculture officer before treatment.']},
+'Banana Panama wilt':{crop:'Banana',wind:false,stages:[1,2],spread:'infected soil, water, tools and planting material',
+ checks:[T(25,32,20,'Warm soils are commonly associated with Fusarium wilt.'),SOILW(35,'Wet or poorly drained soil increases concern.'),RAIN(15,20,'Heavy rain moves soil and water between plants.'),BASE(25,'Infested soil and susceptible varieties are major risk factors; they are not entered.')],
+ guide:'Fusarium wilt (Panama disease) is soil-borne. Warm, wet or poorly drained soils and infected planting material or soil increase concern. Weather alone cannot show infection.',
+ field:'Check for yellowing of older leaves and splitting at the base of the pseudostem. Cut a pseudostem to look for brown vascular discolouration and record the planting material source.',
+ advice:['Use healthy, disease-free planting material.','Avoid moving soil, water and tools from affected plots to healthy plots.','Ask your agriculture officer for diagnosis and local management guidance.']},
+'Tomato early blight':{crop:'Tomato',wind:false,stages:[1,2,3],spread:'wind and rain splash of spores, and infected crop residue',
+ checks:[T(24,29,25,'Warm weather is commonly associated with early blight.'),RH(80,25,'High humidity supports infection.'),WET(8,25,'Long leaf wetness supports infection.'),RAIN(5,15,'Rain splash spreads spores.'),BASE(10,'Plant stress and crop residue are not entered.')],
+ guide:'Early blight is caused by Alternaria species. Warm, humid weather with alternating wet and dry spells and long leaf wetness favours it, especially on older leaves of stressed plants.',
+ field:'Check lower leaves for dark spots with concentric rings and yellow halos. Note plant spacing, irrigation method and crop residue.',
+ advice:['Remove old affected leaves and crop residue as locally advised.','Avoid overhead irrigation late in the day.','Confirm diagnosis and treatment choices with your agriculture officer.']},
+'Tomato late blight':{crop:'Tomato',wind:true,stages:[1,2],spread:'wind-borne spores and rain splash',
+ checks:[T(10,24,30,'Cool to moderate weather is commonly associated with late blight.'),RH(90,30,'Very high humidity supports rapid spread.'),WET(10,20,'Long leaf wetness supports infection.'),RAIN(2,10,'Drizzle or rain keeps leaves wet.'),BASE(10,'Spores from nearby tomato or potato fields are not entered.')],
+ guide:'Late blight is caused by Phytophthora infestans. Cool to moderate temperatures (about 10–24°C), very high humidity and long leaf wetness are commonly associated with rapid spread, so it is mainly a concern in cooler hill or winter conditions.',
+ field:'Check for water-soaked patches on leaves and fruits that turn dark, with white growth in humid conditions. Inspect neighbouring tomato and potato fields.',
+ advice:['Scout daily when it is cool, humid and wet.','Remove and manage severely affected plants as locally advised.','Seek local advice quickly because late blight can spread fast.']},
+'Maize turcicum leaf blight':{crop:'Maize',wind:true,stages:[1,2],spread:'wind-borne spores and crop residue',
+ checks:[T(18,27,25,'Moderate temperatures are commonly associated with this blight.'),RH(85,25,'High humidity supports infection.'),WET(6,25,'Long leaf wetness or heavy dew supports infection.'),RAIN(3,15,'Rain or drizzle supports spread.'),BASE(10,'Variety susceptibility and residue are not entered.')],
+ guide:'Turcicum leaf blight is caused by Exserohilum turcicum. Moderate temperatures (about 18–27°C), high humidity, frequent rain or dew and long leaf wetness favour it.',
+ field:'Look for long, cigar-shaped grey-green to tan lesions starting on lower leaves. Note the variety and crop residue in the field.',
+ advice:['Scout lower leaves after humid, dewy weather.','Use locally recommended tolerant hybrids or varieties.','Confirm diagnosis with your agriculture officer before treatment.']},
+'Maize fall armyworm':{crop:'Maize',wind:false,stages:[0,1],spread:'adult moths that can fly long distances',
+ checks:[T(25,32,30,'Warm weather is commonly associated with infestations.'),DRY(10,25,'Heavy rain can reduce young caterpillars.'),RHL(85,25,'Very humid weather is less favourable.'),BASE(20,'Adult moth presence and neighbouring fields are not entered.')],
+ guide:'Fall armyworm is an insect pest, not a disease. Warm weather and young maize are commonly associated with infestations, and adult moths can fly long distances, so field scouting matters more than weather alone.',
+ field:'Check whorls for ragged feeding holes, sawdust-like frass and small caterpillars. Record the percentage of plants with damage.',
+ advice:['Scout at least 20 plants in a zigzag pattern, especially young crop.','Act early when you see egg masses or small caterpillars.','Ask your agriculture officer for locally recommended management.']},
+'Turmeric rhizome rot':{crop:'Turmeric',wind:false,stages:[0,2],spread:'infected seed rhizomes, soil and water',
+ checks:[SOILW(35,'Waterlogged soil is a major concern for rhizome rot.'),T(25,30,20,'Warm weather is commonly associated with rhizome rot.'),RAIN(20,20,'Heavy rain can cause waterlogging.'),RH(85,10,'Humid weather supports disease.'),BASE(15,'Infected seed rhizomes are a major risk factor; seed health is not entered.')],
+ guide:'Rhizome rot in turmeric is associated with soil-borne fungi such as Pythium. Waterlogged soil, heavy rain, warm humid weather and infected seed rhizomes increase concern.',
+ field:'Check for yellowing and drying of leaves from the margins and for soft, discoloured rhizomes. Inspect drainage and the source of seed rhizomes.',
+ advice:['Use healthy seed rhizomes and improve drainage, for example with raised beds.','Avoid water stagnation in the field.','Ask your agriculture officer for diagnosis and local management guidance.']},
+'Turmeric leaf blotch':{crop:'Turmeric',wind:false,stages:[1,2,3],spread:'rain splash and wind over short distances',
+ checks:[T(20,25,25,'Moderate temperatures are commonly associated with leaf blotch.'),RH(85,25,'High humidity supports disease.'),RAIN(5,20,'Rain splash spreads spores.'),WET(8,20,'Long leaf wetness supports infection.'),BASE(10,'Variety susceptibility is not entered.')],
+ guide:'Turmeric leaf blotch (Taphrina maculans) is commonly associated with humid, rainy weather at moderate temperatures (about 20–25°C) and long leaf wetness.',
+ field:'Look for brown blotches on young leaves that may turn dry and papery. Note the leaf area affected and the variety.',
+ advice:['Scout leaves regularly in humid, rainy weather.','Improve spacing and drainage to reduce humidity.','Confirm diagnosis with your agriculture officer before treatment.']}
+};
+
+/* ---------- state + helpers ---------- */
+let currentRisk=88,currentWind=true;
+const crops=Object.keys(STAGES);
+function go(id,btn){document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));$(id).classList.add('active');document.querySelectorAll('nav button').forEach(x=>x.classList.remove('active'));if(btn)btn.classList.add('active');else{let i=['home','location','weather','risk','windmap','alerts'].indexOf(id);document.querySelectorAll('nav button')[i].classList.add('active')}window.scrollTo(0,0)}
+function checkRow(name,ok,detail){return `<div style="padding:8px 0;border-bottom:1px solid #e7eee8"><b>${ok?'✓':'○'} ${name}</b><div class="muted">${detail}</div></div>`}
+const grade=s=>s>=70?['high','HIGH']:s>=40?['moderate','MODERATE']:['low','LOW'];
+const diseasesFor=c=>Object.keys(DIS).filter(n=>DIS[n].crop===c);
+const params=()=>({t:+temp.value,rh:+humidity.value,rr:+rain.value,wet:+wetness.value,wind:+wind.value,mn:+mintemp.value,so:soil.value});
+function evalDisease(name,p,stageIdx){
+ const D=DIS[name];let score=0,rows='';
+ D.checks.forEach(c=>{const ok=c.f(p);if(ok)score+=c.w;rows+=checkRow(c.n,ok,c.d(p))});
+ const sens=D.stages.includes(stageIdx);if(sens)score+=10;
+ rows+=checkRow('Sensitive crop stage (+10)',sens,sens?'The selected growth stage is commonly more vulnerable to this problem.':'The selected growth stage is not marked as especially vulnerable in this demo.');
+ return{score:Math.min(100,score),rows};
+}
+
+/* ---------- location ---------- */
+function fillSelect(el,items,sel){el.innerHTML='';items.forEach(([v,l])=>{const o=document.createElement('option');o.value=v;o.textContent=l;el.appendChild(o)});if(sel!=null)el.value=sel}
+function loadDistrict(){
+ const d=DISTRICTS[district.value];
+ fillSelect(place,d.places.map((x,i)=>[i,x[0]]),0);
+ placeInfo.textContent=d.info;
+ temp.value=d.sample.t;humidity.value=d.sample.rh;rain.value=d.sample.rain;wetness.value=d.sample.wet;wind.value=d.sample.wind;mintemp.value=d.sample.min;soil.value=d.sample.soil;
+ loadPlace();syncWeather();setCrop(d.crop);
+}
+function loadPlace(){
+ const d=DISTRICTS[district.value],p=d.places[+place.value];
+ if(p){lat.value=p[1];lon.value=p[2]}
+}
+function placeLabel(){
+ const d=DISTRICTS[district.value],p=d.places[+place.value];
+ const custom=place.value==='custom';
+ let parts=[];
+ if(farmName.value.trim())parts.push(farmName.value.trim());
+ if(custom)parts.push('Custom location ('+(+lat.value).toFixed(3)+', '+(+lon.value).toFixed(3)+')');
+ else{const pn=p[0].replace(/ \((city|town)\)$/,'');if(pn!==d.name)parts.push(pn)}
+ parts.push(d.name,'Tamil Nadu');
+ return parts.join(', ');
+}
+function applyLocation(){homeLocation.textContent=placeLabel();calculateRisk();go('home')}
+function buildCoverage(){
+ coverage.innerHTML=['coimbatore','thanjavur','madurai','erode'].map(k=>`<p style="margin:6px 0"><b>${DISTRICTS[k].name}:</b> ${DISTRICTS[k].places.map(x=>x[0].replace(/ \((city|town)\)$/,'')).join(', ')}</p>`).join('')+`<p style="margin:6px 0"><b>District centre only:</b> Tiruvarur, Nagapattinam, Kallakurichi, Cuddalore, Villupuram.</p>`;
+}
+function syncWeather(){homeTemp.textContent=temp.value+'°C';homeHumidity.textContent=humidity.value+'%';homeRain.textContent=rain.value+' mm';homeWet.textContent=wetness.value+' h'}
+function updateWeather(){syncWeather();calculateRisk();alert('Field parameters saved and demo risk recalculated.')}
+function getGPS(){
+ if(!navigator.geolocation){gpsStatus.textContent='GPS is unavailable in this browser.';return}
+ gpsStatus.textContent='Requesting location permission...';
+ navigator.geolocation.getCurrentPosition(p=>{
+  lat.value=p.coords.latitude.toFixed(4);lon.value=p.coords.longitude.toFixed(4);
+  if(!place.querySelector('option[value="custom"]')){const o=document.createElement('option');o.value='custom';o.textContent='Custom / GPS location';place.appendChild(o)}
+  place.value='custom';
+  gpsStatus.textContent='GPS captured: '+lat.value+', '+lon.value+'. Tap "Use this location", or load live weather.';
+ },()=>gpsStatus.textContent='Could not access GPS. Choose a place from the list or type coordinates.');
+}
+['lat','lon'].forEach(id=>$(id).addEventListener('input',()=>{ // manual edits become a custom location
+ if(!place.querySelector('option[value="custom"]')){const o=document.createElement('option');o.value='custom';o.textContent='Custom / GPS location';place.appendChild(o)}
+ place.value='custom';
+}));
+
+/* ---------- live weather (Open-Meteo) ---------- */
+async function fetchWeather(){
+ const la=parseFloat(lat.value),lo=parseFloat(lon.value);
+ if(!isFinite(la)||!isFinite(lo)||Math.abs(la)>90||Math.abs(lo)>180){wxStatus.textContent='Enter valid latitude and longitude first.';return}
+ wxStatus.textContent='Loading live weather…';
+ try{
+  const url=`https://api.open-meteo.com/v1/forecast?latitude=${la}&longitude=${lo}&current=temperature_2m,relative_humidity_2m,wind_speed_10m&hourly=relative_humidity_2m&daily=temperature_2m_min,precipitation_sum&past_days=1&forecast_days=1&timezone=auto`;
+  const r=await fetch(url);if(!r.ok)throw Error('service');
+  const j=await r.json(),c=j.current,h=j.hourly,d=j.daily;
+  const idx=h.time.indexOf(c.time.slice(0,13)+':00');
+  const last24=h.relative_humidity_2m.slice(Math.max(0,idx-23),idx+1);
+  const wetH=last24.filter(v=>v>=90).length;
+  const rainSum=(d.precipitation_sum||[]).reduce((a,b)=>a+(b||0),0);
+  temp.value=Math.round(c.temperature_2m*10)/10;humidity.value=Math.round(c.relative_humidity_2m);
+  rain.value=Math.round(rainSum*10)/10;wind.value=Math.round(c.wind_speed_10m*10)/10;
+  mintemp.value=d.temperature_2m_min[d.temperature_2m_min.length-1];wetness.value=wetH;
+  syncWeather();homeLocation.textContent=placeLabel();calculateRisk();
+  wxStatus.textContent=`Updated from live weather for ${la.toFixed(3)}, ${lo.toFixed(3)}. Rain is yesterday plus today. Leaf wetness (${wetH} h) is an estimate from hours with humidity of 90% or more in the last 24 hours. Soil condition is unchanged, so set it yourself on the Weather page.`;
+ }catch(e){wxStatus.textContent='Could not load live weather. Check your internet connection and try again, or enter values on the Weather page.'}
+}
+
+/* ---------- crop / disease / stage selectors ---------- */
+function setCrop(c,keepDisease){
+ crop.value=c;riskCrop.value=c;
+ const prevD=disease.value,prevS=stage.value;
+ fillSelect(disease,diseasesFor(c).map(n=>[n,n]),keepDisease||null);
+ if(!keepDisease&&diseasesFor(c).includes(prevD))disease.value=prevD;
+ fillSelect(stage,STAGES[c].map((n,i)=>[i,n]),STAGES[c][+prevS]!==undefined&&prevS!==''?prevS:1);
+ calculateRisk();
+}
+function pickDisease(n){disease.value=n;calculateRisk();window.scrollTo({top:0,behavior:'smooth'})}
+
+/* ---------- risk ---------- */
+function calculateRisk(){
+ if(!disease.value)return;
+ const name=disease.value,D=DIS[name],p=params(),st=+stage.value;
+ const {score,rows}=evalDisease(name,p,st),[cls,label]=grade(score);
+ currentRisk=score;currentWind=D.wind;
+ riskResult.className='risk '+cls;riskResult.textContent=label+' · '+score+'% (demo index)';
+ riskSummary.textContent='This is a transparent rule-based demonstration score, not a validated probability or confirmed diagnosis. Verify with field inspection and local agricultural experts.';
+ parameterChecks.innerHTML=rows;diseaseGuide.textContent=D.guide;fieldChecks.textContent=D.field;
+ homeRisk.className='risk '+cls;homeRisk.textContent=label+' · '+score+'%';
+ const loc=homeLocation.textContent;
+ homeRiskText.textContent=name+' demo risk index for '+loc+'.';
+ homeDiseaseTag.textContent=name;homeCropTag.textContent=(CROP_ICON[D.crop]||'')+' '+D.crop;
+ alertText.textContent=label+' demo risk for '+name+' at '+loc+' ('+score+'%). This is a weather-screening alert, not disease confirmation.';
+ advice.innerHTML='<ul>'+D.advice.map(x=>`<li>${esc(x)}</li>`).join('')+'</ul>';
+ compare.innerHTML=diseasesFor(D.crop).map(n=>{const r=evalDisease(n,p,st).score,[c2,l2]=grade(r);return `<div class="cmp ${n===name?'sel':''}" data-n="${esc(n)}" onclick="pickDisease(this.dataset.n)"><span>${esc(n)}</span><span class="badge risk ${c2}" style="padding:4px 9px">${l2} · ${r}%</span></div>`}).join('');
+ if(score>85&&D.wind)makeMap();
+ else{fieldMap.innerHTML='';mapMessage.className='risk yellow';mapMessage.textContent=D.wind?'Wind alert is reserved for source-field risk above 85%.':name+' does not mainly spread by wind (it spreads through '+D.spread+'), so the wind-zone grid is not used.'}
+}
+function makeMap(){
+ if(!currentWind){mapMessage.className='risk yellow';mapMessage.textContent='The selected disease does not mainly spread by wind, so the wind-zone grid is not used.';fieldMap.innerHTML='';return}
+ if(currentRisk<=85){mapMessage.className='risk yellow';mapMessage.textContent='Current demo risk is '+currentRisk+'%. Wind-zone alert requires >85%.';fieldMap.innerHTML='';return}
+ let s=Math.max(1,Math.min(25,+source.value||13))-1,d=direction.value,v={E:[0,1],W:[0,-1],N:[-1,0],S:[1,0],NE:[-1,1],NW:[-1,-1],SE:[1,1],SW:[1,-1]},[dr,dc]=v[d],sr=Math.floor(s/5),sc=s%5,out='';
+ for(let i=0;i<25;i++){let r=Math.floor(i/5),c=i%5,rr=r-sr,cc=c-sc,along=rr*dr+cc*dc,across=Math.abs(rr*dc-cc*dr),tag='G',bg='#56b978',fg='white';if(i===s){tag='S';bg='#3685c8'}else if(along>0&&across<=Math.max(1,Math.ceil(along/2))){tag='R';bg='#e74b40'}else if(Math.max(Math.abs(rr),Math.abs(cc))<=2){tag='Y';bg='#f3c84b';fg='#5d4800'}out+=`<div class="field" style="background:${bg};color:${fg}">${tag}<br>${i+1}</div>`}
+ fieldMap.innerHTML=out;mapMessage.className='risk high';mapMessage.textContent='Potential downwind exposure zones – source field '+(s+1);
+}
+function addReminder(){let v=reminder.value.trim();if(!v)return;let li=document.createElement('li');li.textContent=v;reminders.appendChild(li);reminder.value=''}
+
+/* ---------- start ---------- */
+fillSelect(district,['coimbatore','thanjavur','madurai','erode','thiruvarur','nagapattinam','kallakurichi','cuddalore','villupuram'].map(k=>[k,DISTRICTS[k].name]),'thanjavur');
+fillSelect(crop,crops.map(c=>[c,(CROP_ICON[c]||'')+' '+c]));
+fillSelect(riskCrop,crops.map(c=>[c,(CROP_ICON[c]||'')+' '+c]));
+buildCoverage();
+loadDistrict();
+homeLocation.textContent=placeLabel();
+calculateRisk();go('home');
+</script></body></html>
